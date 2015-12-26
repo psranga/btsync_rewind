@@ -1,0 +1,31 @@
+BTSync Rewind will, on the fly, generate past snapshots of a
+Bittorrent Sync repository. It is implemented as a FUSE file system.
+
+To run from source, remember to update the fusepy library after cloning:
+
+$ git submodule init
+$ git submodule update
+
+To run:
+
+$ mkdir /dev/shm/rewind-view
+$ python btsync_rewind.py /media/disk/btsync/repo /dev/shm/rewind-view
+
+To see current state of repo:
+
+$ ls /dev/shm/review-view/$(date +%s)
+
+To the state at the same time yesterday:
+
+$ ls /dev/shm/review-view/$(date --date='yesterday' +%s)
+
+To view what a file a week ago yesterday:
+
+$ less /dev/shm/review-view/$(date --date='1 week ago' +%s)/file.txt
+
+You get the idea.
+
+When you're done:
+
+$ fusermount -u /dev/shm/rewind-view
+
