@@ -33,10 +33,11 @@ To view the version of 'file.txt' that existed on July 1, 2015:
 
 """
 
+import errno
+import getopt
+import logging
 import os
 import sys
-import errno
-import logging
 
 from fusepy.fuse import FUSE, FuseOSError, Operations
 
@@ -154,10 +155,42 @@ class BTSyncRewinder(Operations):
         raise FuseOSError(errno.EROFS)
 
 
-def main(mountpoint, root):
-    FUSE(BTSyncRewinder(root), mountpoint, nothreads=True, foreground=True)
+def main(foreground, root, mountpoint):
+    FUSE(
+        BTSyncRewinder(root),
+        mountpoint,
+        nothreads=True,
+        foreground=foreground)
+
+
+def check_and_get_params_from_command_line():
+    foreground = False
+    showhelp = False
+    invocation_error = False
+
+    flag_value_pairs, left_over_args = getopt.getopt(sys.argv[1:], "fh",
+                                                     ["help", "foreground"])
+    for flag, value in flag_value_pairs:
+        if flag in ['-f', '--foreground']:
+            foreground = True
+        elif flag in ['-h', '--help']:
+            showhelp = True
+
+    if (not showhelp) and (len(left_over_args) != 2):
+        print 'Syntax error in command line. Exiting.'
+        invocation_error = True
+
+    if showhelp or invocation_error:
+        print('Syntax: python btsync_rewind.py [--foreground|-f] [--help|-h]' +
+              ' <btsync dir> <mount point>')
+        if invocation_error:
+            sys.exit(1)
+        else:
+            sys.exit(0)
+    return (foreground, left_over_args[0], left_over_args[1])
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG)
-    main(sys.argv[2], sys.argv[1])
+    foreground, root, mountpoint = check_and_get_params_from_command_line()
+    main(foreground, root, mountpoint)
